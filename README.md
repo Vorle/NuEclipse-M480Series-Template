@@ -2,6 +2,8 @@
 
 NuEclipse - Template padrÃ£o para Familia de Microcontroladores M480 da Nuvoton
 
+--> Este modelo foi contruido utilizando o PIN Configure e o Clock Configure Nuvoton, as suas bibliotecas de codigo ja estão inclusas.
+
 # Primeiros passos:
 
 1- Para iniciar um projeto novo você deve primeiramente selecionar o partNumber que esta usando, para fazer isso acesse:

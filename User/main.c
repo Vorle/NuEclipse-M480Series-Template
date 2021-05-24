@@ -7,49 +7,11 @@
 *****************************************************************************/
 #include <stdio.h>
 #include "NuMicro.h"
+#include "NuPinConfig.h"
+#include "NuClockConfig.h"
+#include "NK_M487.h"
 
 #define PLL_CLOCK           192000000
-
-void SYS_Init(void)
-{
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Init System Clock                                                                                       */
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Unlock protected registers */
-    SYS_UnlockReg();
-
-    /* Set XT1_OUT(PF.2) and XT1_IN(PF.3) to input mode */
-    PF->MODE &= ~(GPIO_MODE_MODE2_Msk | GPIO_MODE_MODE3_Msk);
-
-    /* Enable External XTAL (4~24 MHz) */
-    CLK_EnableXtalRC(CLK_PWRCTL_HXTEN_Msk);
-
-    /* Waiting for 12MHz clock ready */
-    CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk);
-
-    /* Set core clock as PLL_CLOCK from PLL */
-    CLK_SetCoreClock(PLL_CLOCK);
-    /* Set PCLK0/PCLK1 to HCLK/2 */
-    CLK->PCLKDIV = (CLK_PCLKDIV_APB0DIV_DIV2 | CLK_PCLKDIV_APB1DIV_DIV2);
-
-    /* Enable UART clock */
-    CLK_EnableModuleClock(UART0_MODULE);
-
-    /* Select UART clock source from HXT */
-    CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UART0SEL_HXT, CLK_CLKDIV0_UART0(1));
-
-    /* Update System Core Clock */
-    /* User can use SystemCoreClockUpdate() to calculate SystemCoreClock. */
-    SystemCoreClockUpdate();
-
-
-
-    /* Set GPB multi-function pins for UART0 RXD and TXD */
-    SYS->GPB_MFPH &= ~(SYS_GPB_MFPH_PB12MFP_Msk | SYS_GPB_MFPH_PB13MFP_Msk);
-    SYS->GPB_MFPH |= (SYS_GPB_MFPH_PB12MFP_UART0_RXD | SYS_GPB_MFPH_PB13MFP_UART0_TXD);
-    /* Lock protected registers */
-    SYS_LockReg();
-}
 
 /*
  * This is a template project for M480 series MCU. Users could based on this project to create their
@@ -61,15 +23,65 @@ void SYS_Init(void)
 
 int main()
 {
+	/* Unlock protected registers */
+	/*SYS_UnlockReg();
 
-    SYS_Init();
+	/* Init System, IP clock and multi-function I/O */
+	//SYS_Init();
+
+	/* Lock protected registers */
+	//SYS_LockReg();
+
+	NuClockConfig_init();
+	NuPinConfig_init();
+
+	GPIO_SetMode(PH, BIT7, GPIO_MODE_OPEN_DRAIN);//LED1
+	GPIO_SetMode(PH, BIT6, GPIO_MODE_OPEN_DRAIN);//LED0
+	GPIO_SetMode(PB, BIT7, GPIO_MODE_OUTPUT);//LCD_BL
+
+
     /* Init UART to 115200-8n1 for print message */
     UART_Open(UART0, 115200);
+
+    //BPWM_ConfigOutputChannel(BPWM0, BPWM_CH_5_MASK, 10, 50);
+
+	/* Enable output of BPWM0 channel 0~5 */
+	//BPWM_EnableOutput(BPWM0, BPWM_CH_5_MASK);
+
+	/* Start BPWM0 counter */
+	//BPWM_Start(BPWM0,BPWM_CH_5_MASK);
+
+	/* Start BPWM0 counter */
+	//
+
     /* Connect UART to PC, and open a terminal tool to receive following message */
     printf("Hello World\n");
 
+    LED1 = 1;
+    LED2 = 0;
+    LCD_BL = 1;
+
     /* Got no where to go, just loop forever */
-    while(1);
+    while(1)
+    {
+    	if(!PA0)
+    	{
+    		LED1 = ~LED1;
+    		LED2 = ~LED2;
+    		while(!PA0);
+    		//BPWM_ForceStop(BPWM0, BPWM_CH_5_MASK);
+    		//BPWM_ConfigOutputChannel(BPWM0, 5, 1000, 50);
+    	}
+    	else if(!PA1)
+    	{
+    		LCD_BL = ~LCD_BL;
+    		while(!PA1);
+    		//BPWM_Start(BPWM0, BPWM_CH_5_MASK);
+    		//BPWM_ConfigOutputChannel(BPWM0, 5, 3000, 60);
+    	}
+    	//else BPWM_ConfigOutputChannel(BPWM0, 5, 1000, 50);
+    	//CLK_SysTickDelay(time);
+    }
 
 }
 
